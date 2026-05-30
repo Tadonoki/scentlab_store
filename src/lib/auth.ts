@@ -17,7 +17,11 @@ export const auth = betterAuth({
     enabled: true,
     autoSignIn: true,
   },
-  trustedOrigins: [process.env.BETTER_AUTH_URL || "http://localhost:3000"],
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
-  secret: process.env.BETTER_AUTH_SECRET || "scentlab-store-secret",
+  trustedOrigins: [
+    "http://localhost:3000",
+    "https://scentlab-store.vercel.app",
+    process.env.BETTER_AUTH_URL,
+  ].filter(Boolean) as string[],
+  baseURL: process.env.BETTER_AUTH_URL || "https://scentlab-store.vercel.app",
+  secret: process.env.BETTER_AUTH_SECRET || "scentlab-store-super-secret-minimal-32-character",
 });

@@ -40,6 +40,9 @@ export default function AdminLoginPage() {
         router.push("/admin/dashboard");
       }
     } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Terjadi kesalahan tidak diketahui";
+      console.error("[Login Error Detail]:", errorMessage, err);
       setError("Terjadi kesalahan. Silakan coba lagi.");
       setLoading(false);
     }
