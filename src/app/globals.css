@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+/* ─── ScentLab_Store Color Palette ─── */
+:root {
+  --color-warm-beige: #D8CCBC;
+  --color-soft-taupe: #CDBEAE;
+  --color-nude-cream: #F5EFE7;
+  --color-dark-brown: #3A2C24;
+  --color-near-black: #1F1B18;
+  --color-soft-gold: #B9935A;
+
+  --background: var(--color-nude-cream);
+  --foreground: var(--color-near-black);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-warm-beige: #D8CCBC;
+  --color-soft-taupe: #CDBEAE;
+  --color-nude-cream: #F5EFE7;
+  --color-dark-brown: #3A2C24;
+  --color-near-black: #1F1B18;
+  --color-soft-gold: #B9935A;
+
+  --font-sans: 'Lora', Georgia, serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-script: 'Great Vibes', cursive;
+}
+
+body {
+  background: var(--color-nude-cream);
+  color: var(--color-near-black);
+  font-family: 'Lora', Georgia, serif;
+}
+
+/* ─── Scrollbar Styling ─── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-nude-cream);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-soft-taupe);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-soft-gold);
+}
+
+/* ─── Print Styles ─── */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  body > *:not(.receipt-print-area),
+  .print-hidden {
+    display: none !important;
+  }
+  .receipt-print-area,
+  .receipt-print-area * {
+    visibility: visible;
+  }
+  .receipt-print-area {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    width: 420px;
+    max-width: 100%;
+    background: #F5EFE7 !important;
+    border: none !important;
+    page-break-after: avoid;
+    break-inside: avoid;
+  }
+  @page {
+    margin: 15mm 10mm;
+    size: auto;
+  }
+}
+
+/* ─── Selection ─── */
+::selection {
+  background: var(--color-soft-gold);
+  color: white;
+}
