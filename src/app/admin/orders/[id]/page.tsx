@@ -478,7 +478,7 @@ export default function AdminOrderDetailPage() {
           {/* Header */}
           <div className="text-center border-b border-dark-brown pb-3">
             <h1 className="font-serif text-2xl tracking-widest uppercase font-bold text-soft-gold">ScentLab_Store</h1>
-            <p className="text-[10px] uppercase tracking-wider text-dark-brown/60">Premium Fragrances & Scented Goods</p>
+            <p className="text-[10px] uppercase tracking-wider text-dark-brown/60">Serenity In Every Scent</p>
           </div>
 
           {/* Info Grid */}
