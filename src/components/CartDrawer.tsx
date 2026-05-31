@@ -1,10 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
-import { formatPrice } from "@/lib/utils";
+import { Product, formatPrice } from "@/lib/utils";
 import CheckoutForm from "./CheckoutForm";
+
+function getDiscountedPrice(product: Product): number {
+  if (product.discount_active && product.discount_percent && product.discount_percent > 0) {
+    return Math.round(product.price * (1 - product.discount_percent / 100));
+  }
+  return product.price;
+}
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -127,7 +134,16 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                             </span>
                           )}
                           <p className="text-sm text-dark-brown/70 font-sans mt-1">
-                            {formatPrice(item.product.price)}
+                            {item.product.discount_active && item.product.discount_percent > 0 ? (
+                              <>
+                                <span className="text-[10px] text-red-500 line-through mr-1">
+                                  {formatPrice(item.product.price)}
+                                </span>
+                                <span>{formatPrice(getDiscountedPrice(item.product))}</span>
+                              </>
+                            ) : (
+                              formatPrice(item.product.price)
+                            )}
                           </p>
 
                           {/* Quantity Controls */}
@@ -173,7 +189,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
                         <div className="text-right flex-shrink-0">
                           <p className="text-sm font-sans text-dark-brown font-medium">
-                            {formatPrice(item.product.price * item.quantity)}
+                            {formatPrice(getDiscountedPrice(item.product) * item.quantity)}
                           </p>
                         </div>
                       </div>

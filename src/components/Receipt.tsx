@@ -48,11 +48,13 @@ export default function Receipt({
 Kode Order: ${orderData.order_code}
 Nama: ${orderData.buyer_name}
 No WA: ${orderData.buyer_phone}
+Provinsi: ${orderData.buyer_province || "-"}
 Alamat: ${orderData.buyer_address}
 
 Pesanan:
 ${itemsText}
 
+Ongkir: Rp${orderData.shipping_amount.toLocaleString("id-ID")}
 Total: Rp${orderData.total_amount.toLocaleString("id-ID")}
 Metode Pembayaran: ${orderData.payment_method}
 
@@ -93,7 +95,7 @@ Saya akan mengirim bukti pembayaran.`;
       <head>
         <title>Struk - ${orderData.order_code}</title>
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Alex+Brush&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap');
           * { margin:0; padding:0; box-sizing:border-box; }
           body {
             display:flex; justify-content:center; align-items:center;
@@ -107,7 +109,7 @@ Saya akan mengirim bukti pembayaran.`;
           }
           .receipt-header { text-align:center; margin-bottom:24px; }
           .brand-name {
-            font-family:'Great Vibes',cursive;
+            font-family:'Alex Brush',cursive;
             font-size:32px; color:#3A2C24; line-height:1.2;
           }
           .tagline {
@@ -196,6 +198,7 @@ Saya akan mengirim bukti pembayaran.`;
             <strong>Data Pembeli</strong><br/>
             <span style="color:#8a7a6a;">Nama:</span> ${orderData.buyer_name}<br/>
             <span style="color:#8a7a6a;">No. WA:</span> ${orderData.buyer_phone}<br/>
+            <span style="color:#8a7a6a;">Provinsi:</span> ${orderData.buyer_province || "-"}<br/>
             <span style="color:#8a7a6a;">Alamat:</span> ${orderData.buyer_address}<br/>
             <span style="color:#8a7a6a;">Pembayaran:</span> ${orderData.payment_method}
           </div>
@@ -309,7 +312,7 @@ Saya akan mengirim bukti pembayaran.`;
             <div className="text-center mb-5">
               <h2
                 className="font-script text-3xl text-dark-brown leading-none"
-                style={{ fontFamily: "'Great Vibes', cursive" }}
+                style={{ fontFamily: "'Alex Brush', cursive" }}
               >
                 ScentLab_Store
               </h2>
@@ -370,6 +373,12 @@ Saya akan mengirim bukti pembayaran.`;
                 <span className="text-dark-brown/50">No. WA: </span>
                 {orderData.buyer_phone}
               </p>
+              {orderData.buyer_province && (
+                <p>
+                  <span className="text-dark-brown/50">Provinsi: </span>
+                  {orderData.buyer_province}
+                </p>
+              )}
               <p>
                 <span className="text-dark-brown/50">Alamat: </span>
                 {orderData.buyer_address}
@@ -397,6 +406,11 @@ Saya akan mengirim bukti pembayaran.`;
                     <p className="text-[11px] text-dark-brown/50 font-sans">
                       {item.scent_notes} × {item.quantity}
                     </p>
+                    {item.price !== item.original_price && item.original_price && (
+                      <p className="text-[10px] text-red-500 font-sans mt-0.5">
+                        Disc {Math.round((1 - item.price / item.original_price) * 100)}% off
+                      </p>
+                    )}
                   </div>
                   <p className="text-sm font-sans text-dark-brown font-medium whitespace-nowrap">
                     {formatPrice(item.subtotal)}

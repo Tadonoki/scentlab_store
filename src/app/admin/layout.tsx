@@ -10,6 +10,7 @@ import {
   LogOut,
   Menu,
   X,
+  Truck,
 } from "lucide-react";
 import { useState } from "react";
 import { signOut } from "@/lib/auth-client";
@@ -18,6 +19,7 @@ const adminNavItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
+  { href: "/admin/shipping", label: "Ongkir", icon: Truck },
 ];
 
 export default function AdminLayout({

@@ -25,6 +25,8 @@ export default function AdminEditProductPage() {
     is_featured: false,
     is_active: true,
     imageUrl: "",
+    discount_percent: "0",
+    discount_active: false,
   });
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -50,6 +52,8 @@ export default function AdminEditProductPage() {
           is_featured: product.is_featured,
           is_active: product.is_active,
           imageUrl: product.image_url,
+          discount_percent: product.discount_percent.toString(),
+          discount_active: product.discount_active,
         });
         setImagePreview(product.image_url);
       } catch (err) {
@@ -91,6 +95,8 @@ export default function AdminEditProductPage() {
         badge: formData.badge || null,
         isFeatured: formData.is_featured,
         isActive: formData.is_active,
+        discountPercent: Number(formData.discount_percent) || 0,
+        discountActive: formData.discount_active,
       });
       router.push("/admin/products");
     } catch (err) {
@@ -226,6 +232,9 @@ export default function AdminEditProductPage() {
                 <option value="Lilin Aromaterapi">Lilin Aromaterapi</option>
                 <option value="Lilin Dekorasi">Lilin Dekorasi</option>
                 <option value="Essential Oil">Essential Oil</option>
+                <option value="Reed Diffuser">Reed Diffuser</option>
+                <option value="Pewangi Gantung">Pewangi Gantung</option>
+                <option value="Accessories">Accessories</option>
               </select>
             </div>
           </div>
@@ -353,6 +362,53 @@ export default function AdminEditProductPage() {
               onChange={handleImageUpload}
               className="hidden"
             />
+          </div>
+
+          {/* Discount Section */}
+          <div className="border-t border-warm-beige/30 pt-5">
+            <h3 className="text-xs uppercase tracking-wider text-dark-brown/60 font-sans mb-3">
+              Diskon
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-dark-brown/60 font-sans mb-1.5">
+                  Diskon (%)
+                </label>
+                <input
+                  type="number"
+                  name="discount_percent"
+                  value={formData.discount_percent}
+                  onChange={handleChange}
+                  min="0"
+                  max="100"
+                  placeholder="0"
+                  className="w-full px-4 py-2.5 bg-nude-cream border border-warm-beige/60 text-dark-brown text-sm font-sans focus:outline-none focus:border-soft-gold transition-colors"
+                />
+              </div>
+              <div className="flex items-end pb-2.5">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="discount_active"
+                    checked={formData.discount_active}
+                    onChange={handleChange}
+                    className="accent-soft-gold w-4 h-4"
+                  />
+                  <span className="text-sm font-sans text-dark-brown">
+                    Aktifkan Diskon
+                  </span>
+                </label>
+              </div>
+            </div>
+            {Number(formData.discount_percent) > 0 && formData.price && (
+              <p className="text-xs text-soft-gold font-sans mt-1">
+                Harga setelah diskon:{' '}
+                <span className="font-semibold">
+                  Rp{(Number(formData.price) * (1 - Number(formData.discount_percent) / 100)).toLocaleString("id-ID")}
+                  {formData.discount_active ? "" : " (diskon tidak aktif)"}
+                </span>
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-6 pt-2">

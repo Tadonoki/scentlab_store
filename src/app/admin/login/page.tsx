@@ -54,10 +54,7 @@ export default function AdminLoginPage() {
         {/* Logo / Brand */}
         <div className="text-center mb-10">
           <div className="text-3xl text-soft-gold/30 mb-3">✿</div>
-          <h1
-            className="font-script text-4xl text-dark-brown mb-2"
-            style={{ fontFamily: "'Great Vibes', cursive" }}
-          >
+          <h1 className="font-script text-4xl text-dark-brown mb-2">
             ScentLab_Store
           </h1>
           <p className="text-sm text-dark-brown/50 font-sans italic">

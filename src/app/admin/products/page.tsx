@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Plus, Edit3, Trash2, Eye, EyeOff, Search } from "lucide-react";
+import { Plus, Edit3, Trash2, Eye, EyeOff, Search, Tag, X, Percent } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
-import { getAllProducts, deleteProduct, toggleProductActive } from "@/lib/actions/products";
+import { getAllProducts, deleteProduct, toggleProductActive, bulkUpdateDiscount } from "@/lib/actions/products";
 import type { Product } from "@/lib/utils";
 
 export default function AdminProductsPage() {
@@ -12,6 +12,9 @@ export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [showBulkDiscount, setShowBulkDiscount] = useState(false);
+  const [bulkDiscountPercent, setBulkDiscountPercent] = useState("10");
+  const [bulkDiscountBusy, setBulkDiscountBusy] = useState(false);
 
   const loadProducts = async () => {
     try {
@@ -141,17 +144,118 @@ export default function AdminProductsPage() {
         </Link>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-6 max-w-md">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-soft-taupe" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search products..."
-          className="w-full pl-10 pr-4 py-2.5 bg-white border border-warm-beige/60 text-dark-brown text-sm font-sans focus:outline-none focus:border-soft-gold transition-colors"
-        />
+      {/* Search & Bulk Actions */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
+        <div className="relative flex-1 max-w-md">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-soft-taupe" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search products..."
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-warm-beige/60 text-dark-brown text-sm font-sans focus:outline-none focus:border-soft-gold transition-colors"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowBulkDiscount(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs uppercase tracking-wider font-sans border border-warm-beige/60 text-dark-brown/70 hover:text-dark-brown hover:border-soft-gold transition-colors"
+          >
+            <Percent size={14} />
+            Bulk Discount
+          </button>
+        </div>
       </div>
+
+      {/* Bulk Discount Modal */}
+      {showBulkDiscount && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-near-black/40 px-4">
+          <div className="bg-white border border-warm-beige/40 p-6 w-full max-w-md shadow-xl">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-serif text-lg text-dark-brown">Bulk Diskon</h3>
+              <button
+                onClick={() => setShowBulkDiscount(false)}
+                className="p-1 text-dark-brown/40 hover:text-dark-brown transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="text-xs text-dark-brown/50 font-sans mb-4">
+              Terapkan diskon ke <strong>semua produk</strong> secara serentak.
+            </p>
+
+            <div className="mb-4">
+              <label className="block text-xs uppercase tracking-wider text-dark-brown/60 font-sans mb-1.5">
+                Diskon (%)
+              </label>
+              <input
+                type="number"
+                value={bulkDiscountPercent}
+                onChange={(e) => setBulkDiscountPercent(e.target.value)}
+                min="0"
+                max="100"
+                className="w-full px-4 py-2.5 bg-nude-cream border border-warm-beige/60 text-dark-brown text-sm font-sans focus:outline-none focus:border-soft-gold transition-colors"
+              />
+              {Number(bulkDiscountPercent) > 0 && (
+                <p className="text-xs text-soft-gold font-sans mt-1">
+                  Semua produk akan mendapat diskon {bulkDiscountPercent}%
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                disabled={bulkDiscountBusy}
+                onClick={async () => {
+                  if (bulkDiscountBusy) return;
+                  const percent = Number(bulkDiscountPercent);
+                  if (percent < 0 || percent > 100) {
+                    showToast("Diskon harus antara 0-100%", "error");
+                    return;
+                  }
+                  setBulkDiscountBusy(true);
+                  try {
+                    await bulkUpdateDiscount({ discountPercent: percent, discountActive: percent > 0 });
+                    setShowBulkDiscount(false);
+                    showToast(`Diskon ${percent}% berhasil diterapkan ke semua produk`, "success");
+                    await loadProducts();
+                  } catch (err) {
+                    console.error("Failed to apply bulk discount:", err);
+                    showToast("Gagal menerapkan diskon", "error");
+                  } finally {
+                    setBulkDiscountBusy(false);
+                  }
+                }}
+                className="flex-1 py-2.5 bg-dark-brown text-nude-cream text-xs tracking-wider uppercase font-sans hover:bg-soft-gold transition-colors disabled:opacity-50"
+              >
+                {bulkDiscountBusy ? "Menerapkan..." : "Terapkan ke Semua"}
+              </button>
+              <button
+                disabled={bulkDiscountBusy}
+                onClick={async () => {
+                  if (bulkDiscountBusy) return;
+                  setBulkDiscountBusy(true);
+                  try {
+                    await bulkUpdateDiscount({ discountPercent: 0, discountActive: false });
+                    setShowBulkDiscount(false);
+                    showToast("Diskon berhasil dihapus dari semua produk", "success");
+                    await loadProducts();
+                  } catch (err) {
+                    console.error("Failed to remove discounts:", err);
+                    showToast("Gagal menghapus diskon", "error");
+                  } finally {
+                    setBulkDiscountBusy(false);
+                  }
+                }}
+                className="px-4 py-2.5 border border-warm-beige/60 text-dark-brown/60 text-xs tracking-wider uppercase font-sans hover:text-dark-brown hover:border-soft-gold transition-colors disabled:opacity-50"
+              >
+                Hapus Semua
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Products Table */}
       <div className="bg-white border border-warm-beige/40 overflow-x-auto">
@@ -168,6 +272,9 @@ export default function AdminProductsPage() {
                 </th>
                 <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-dark-brown/60 font-sans">
                   Price
+                </th>
+                <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-dark-brown/60 font-sans">
+                  Discount
                 </th>
                 <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-dark-brown/60 font-sans">
                   Stock
@@ -209,6 +316,15 @@ export default function AdminProductsPage() {
                   </td>
                   <td className="px-4 py-4 text-sm font-sans text-dark-brown">
                     {formatPrice(product.price)}
+                  </td>
+                  <td className="px-4 py-4">
+                    {product.discount_active && product.discount_percent > 0 ? (
+                      <span className="text-[10px] px-2 py-0.5 bg-red-50 text-red-600 border border-red-200 font-sans uppercase tracking-wider">
+                        -{product.discount_percent}%
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-dark-brown/30 font-sans">-</span>
+                    )}
                   </td>
                   <td className="px-4 py-4 text-sm font-sans text-dark-brown">{product.stock}</td>
                   <td className="px-4 py-4">

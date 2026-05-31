@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { ShoppingBag, Sparkles } from "lucide-react";
 import { Product, formatPrice } from "@/lib/utils";
 import { useCart } from "@/lib/cart-context";
@@ -9,12 +9,24 @@ interface ProductCardProps {
   product: Product;
 }
 
+function getDiscountedPrice(price: number, discountPercent: number, discountActive: boolean): number {
+  if (discountActive && discountPercent > 0) {
+    return Math.round(price * (1 - discountPercent / 100));
+  }
+  return price;
+}
+
 export default function ProductCard({ product }: ProductCardProps) {
   const { addItem, triggerToast } = useCart();
   const handleAddToCart = () => {
     addItem(product);
     triggerToast("Produk berhasil ditambahkan ke keranjang");
   };
+
+  const discountedPrice = useMemo(
+    () => getDiscountedPrice(product.price, product.discount_percent, product.discount_active),
+    [product.price, product.discount_percent, product.discount_active]
+  );
 
   const getBadgeStyle = (badge: string | null) => {
     switch (badge) {
@@ -48,10 +60,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
-              <div
-                className="text-5xl md:text-6xl text-soft-gold/40 font-script mb-2"
-                style={{ fontFamily: "'Great Vibes', cursive" }}
-              >
+              <div className="text-5xl md:text-6xl text-soft-gold/40 font-script mb-2">
                 🕯️
               </div>
               <p className="text-[10px] uppercase tracking-[0.3em] text-soft-taupe font-sans">
@@ -92,9 +101,22 @@ export default function ProductCard({ product }: ProductCardProps) {
           >
             {product.name}
           </h3>
-          <span className="text-sm md:text-base font-sans text-dark-brown font-medium ml-2 whitespace-nowrap">
-            {formatPrice(product.price)}
-          </span>
+          <div className="flex flex-col items-end ml-2 whitespace-nowrap">
+            {product.discount_active && product.discount_percent > 0 ? (
+              <>
+                <span className="text-[10px] text-red-500 font-sans line-through">
+                  {formatPrice(product.price)}
+                </span>
+                <span className="text-sm md:text-base font-sans text-dark-brown font-medium">
+                  {formatPrice(discountedPrice)}
+                </span>
+              </>
+            ) : (
+              <span className="text-sm md:text-base font-sans text-dark-brown font-medium">
+                {formatPrice(product.price)}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-1.5 mb-2">

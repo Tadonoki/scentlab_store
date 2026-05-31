@@ -65,6 +65,8 @@ export async function createProduct(data: {
   badge?: string | null;
   isFeatured?: boolean;
   isActive?: boolean;
+  discountPercent?: number;
+  discountActive?: boolean;
 }) {
   await db.insert(products).values({
     name: data.name,
@@ -78,6 +80,8 @@ export async function createProduct(data: {
     badge: data.badge || null,
     isFeatured: data.isFeatured ?? false,
     isActive: data.isActive ?? true,
+    discountPercent: data.discountPercent ?? 0,
+    discountActive: data.discountActive ?? false,
   });
 }
 
@@ -96,6 +100,8 @@ export async function updateProduct(
     badge?: string | null;
     isFeatured?: boolean;
     isActive?: boolean;
+    discountPercent?: number;
+    discountActive?: boolean;
   }
 ) {
   await db.update(products).set(data).where(eq(products.id, id));
@@ -123,4 +129,52 @@ export async function deleteProduct(id: string): Promise<{ success: boolean; err
 // ─── Admin: Toggle active status ───
 export async function toggleProductActive(id: string, isActive: boolean) {
   await db.update(products).set({ isActive }).where(eq(products.id, id));
+}
+
+// ─── Admin: Bulk discount — apply to all products ───
+export async function applyDiscountToAll(discountPercent: number) {
+  const active = discountPercent > 0;
+  await db
+    .update(products)
+    .set({ discountPercent, discountActive: active });
+}
+
+// ─── Admin: Bulk discount — apply to selected products ───
+export async function applyDiscountToSelected(ids: string[], discountPercent: number) {
+  const active = discountPercent > 0;
+  for (const id of ids) {
+    await db
+      .update(products)
+      .set({ discountPercent, discountActive: active })
+      .where(eq(products.id, id));
+  }
+}
+
+// ─── Admin: Remove discount from all products ───
+export async function removeAllDiscounts() {
+  await db
+    .update(products)
+    .set({ discountPercent: 0, discountActive: false });
+}
+
+// ─── Admin: Unified bulk discount action ───
+export async function bulkUpdateDiscount(data: {
+  productIds?: string[];
+  discountPercent: number;
+  discountActive: boolean;
+}) {
+  if (data.productIds && data.productIds.length > 0) {
+    // Apply to selected products
+    for (const id of data.productIds) {
+      await db
+        .update(products)
+        .set({ discountPercent: data.discountPercent, discountActive: data.discountActive })
+        .where(eq(products.id, id));
+    }
+  } else {
+    // Apply to all products
+    await db
+      .update(products)
+      .set({ discountPercent: data.discountPercent, discountActive: data.discountActive });
+  }
 }

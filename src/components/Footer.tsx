@@ -12,7 +12,8 @@ import {
   SITE_NAME,
   WHATSAPP_NUMBER,
   getWhatsAppUrl,
-} from "@/lib/products";
+  FACEBOOK_URL,
+} from "@/lib/utils";
 
 export default function Footer() {
   const whatsappUrl = getWhatsAppUrl(
@@ -28,7 +29,7 @@ export default function Footer() {
           <div>
             <h3
               className="font-script text-3xl text-nude-cream mb-2"
-              style={{ fontFamily: "'Great Vibes', cursive" }}
+              style={{ fontFamily: "'Alex Brush', cursive" }}
             >
               {SITE_NAME}
             </h3>
@@ -128,7 +129,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="#"
+                  href={FACEBOOK_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm font-sans text-nude-cream/60 hover:text-soft-gold transition-colors"

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display, Great_Vibes } from "next/font/google";
+import { Inter, Playfair_Display, Alex_Brush } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
 import ToastWrapper from "@/components/ToastWrapper";
@@ -14,7 +14,7 @@ const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
 });
 
-const greatVibes = Great_Vibes({
+const alexBrush = Alex_Brush({
   weight: "400",
   variable: "--font-script",
   subsets: ["latin"],
@@ -37,7 +37,7 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={`${inter.variable} ${playfairDisplay.variable} ${greatVibes.variable} h-full antialiased`}
+      className={`${inter.variable} ${playfairDisplay.variable} ${alexBrush.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-nude-cream text-dark-brown">
         <CartProvider>

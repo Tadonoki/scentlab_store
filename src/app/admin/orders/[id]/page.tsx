@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Send, Phone, User, MapPin, CreditCard, Package } from "lucide-react";
+import { ArrowLeft, Send, Phone, User, MapPin, CreditCard, Package, Printer, Truck } from "lucide-react";
 import { formatPrice, WHATSAPP_NUMBER, getWhatsAppUrl } from "@/lib/utils";
 import { getOrderDetail, updateOrderStatus } from "@/lib/actions/orders";
+import { toPng } from "html-to-image";
 
 const statusColors: Record<string, string> = {
   PENDING_PAYMENT: "bg-yellow-50 text-yellow-700 border-yellow-200",
@@ -36,6 +37,7 @@ interface Order {
   order_code: string;
   buyer_name: string;
   buyer_phone: string;
+  buyer_province?: string;
   buyer_address: string;
   payment_method: string;
   notes: string;
@@ -58,6 +60,28 @@ export default function AdminOrderDetailPage() {
   const [currentStatus, setCurrentStatus] = useState("");
   const [updating, setUpdating] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const labelRef = useRef<HTMLDivElement>(null);
+  const [generatingLabel, setGeneratingLabel] = useState(false);
+
+  const handleDownloadLabel = async () => {
+    if (!labelRef.current || !order) return;
+    setGeneratingLabel(true);
+    try {
+      const dataUrl = await toPng(labelRef.current, {
+        cacheBust: true,
+      });
+      const link = document.createElement("a");
+      link.download = `label-pengiriman-${order.order_code}.png`;
+      link.href = dataUrl;
+      link.click();
+      showToast("success", "Label pengiriman berhasil diunduh");
+    } catch (err) {
+      console.error("Gagal membuat gambar label:", err);
+      showToast("error", "Gagal mencetak label pengiriman");
+    } finally {
+      setGeneratingLabel(false);
+    }
+  };
 
   useEffect(() => {
     async function load() {
@@ -197,6 +221,22 @@ export default function AdminOrderDetailPage() {
                   <p className="text-sm font-sans text-dark-brown">
                     {order.buyer_phone}
                   </p>
+                </div>
+              </div>
+              {order.buyer_province && (
+                <div className="flex items-center gap-3">
+                  <MapPin size={16} className="text-soft-taupe flex-shrink-0" />
+                  <div>
+                    <p className="text-xs text-dark-brown/40 font-sans">Province</p>
+                    <p className="text-sm font-sans text-dark-brown">{order.buyer_province}</p>
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center gap-3">
+                <Truck size={16} className="text-soft-taupe flex-shrink-0" />
+                <div>
+                  <p className="text-xs text-dark-brown/40 font-sans">Shipping Cost</p>
+                  <p className="text-sm font-sans text-dark-brown">{formatPrice(order.shipping_amount)}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -363,6 +403,20 @@ export default function AdminOrderDetailPage() {
                 </>
               )}
             </button>
+            <button
+              onClick={handleDownloadLabel}
+              disabled={generatingLabel}
+              className="w-full mt-3 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-soft-gold text-white text-sm tracking-wider uppercase font-sans hover:bg-dark-brown transition-colors disabled:opacity-50"
+            >
+              {generatingLabel ? (
+                <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  <Printer size={16} />
+                  Cetak Label Pengiriman
+                </>
+              )}
+            </button>
           </div>
 
           {/* Contact Customer */}
@@ -410,6 +464,74 @@ export default function AdminOrderDetailPage() {
                 </span>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Hidden shipping label container */}
+      <div style={{ position: "absolute", top: "-9999px", left: "-9999px" }}>
+        <div
+          ref={labelRef}
+          className="w-[450px] p-6 bg-nude-cream border-2 border-dark-brown text-dark-brown font-sans flex flex-col gap-4"
+          style={{ backgroundColor: "#F5EFE7", borderColor: "#3A2C24", color: "#3A2C24" }}
+        >
+          {/* Header */}
+          <div className="text-center border-b border-dark-brown pb-3">
+            <h1 className="font-serif text-2xl tracking-widest uppercase font-bold text-soft-gold">ScentLab_Store</h1>
+            <p className="text-[10px] uppercase tracking-wider text-dark-brown/60">Premium Fragrances & Scented Goods</p>
+          </div>
+
+          {/* Info Grid */}
+          <div className="grid grid-cols-2 gap-4 border-b border-dark-brown/20 pb-4">
+            {/* Sender */}
+            <div className="border-r border-dark-brown/20 pr-4">
+              <p className="text-[10px] uppercase font-bold tracking-wider text-soft-gold">Pengirim</p>
+              <p className="text-sm font-serif font-bold mt-1 text-dark-brown">ScentLab_Store</p>
+              <p className="text-xs font-mono mt-1 text-dark-brown/80">087868403642</p>
+            </div>
+
+            {/* Code */}
+            <div className="pl-2 flex flex-col justify-center items-end text-right">
+              <p className="text-[10px] uppercase font-bold tracking-wider text-soft-gold">No. Order</p>
+              <p className="text-base font-mono font-bold text-dark-brown mt-0.5">{order.order_code}</p>
+            </div>
+          </div>
+
+          {/* Recipient */}
+          <div className="flex flex-col gap-2">
+            <p className="text-[10px] uppercase font-bold tracking-wider text-soft-gold">Penerima</p>
+            <div>
+              <p className="text-xs text-dark-brown/40 font-sans">Nama Penerima</p>
+              <p className="text-base font-serif font-bold text-dark-brown">{order.buyer_name}</p>
+              <p className="text-xs text-dark-brown/40 font-sans mt-1">No Hp</p>
+              <p className="text-sm font-mono text-dark-brown/80">{order.buyer_phone}</p>
+            </div>
+            
+            {order.buyer_province && (
+              <div className="mt-1">
+                <p className="text-[10px] uppercase font-semibold text-dark-brown/50">Provinsi</p>
+                <p className="text-xs font-sans text-dark-brown">{order.buyer_province}</p>
+              </div>
+            )}
+
+            <div className="mt-1">
+              <p className="text-[10px] uppercase font-semibold text-dark-brown/50">Alamat</p>
+              <p className="text-xs font-sans leading-relaxed text-dark-brown">
+                {order.buyer_address}
+              </p>
+            </div>
+
+            {order.notes && (
+              <div className="mt-2 p-2 bg-white/50 border border-dark-brown/10 text-xs">
+                <p className="font-bold text-[9px] uppercase tracking-wider text-dark-brown/60">Catatan/Note:</p>
+                <p className="mt-0.5 font-sans italic text-dark-brown">{order.notes}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="mt-2 pt-3 border-t border-dark-brown/10 text-center">
+            <p className="text-[9px] text-dark-brown/40 italic font-sans">Thank you for shopping with us!</p>
           </div>
         </div>
       </div>

@@ -126,8 +126,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setShowToast(false);
   }, []);
 
+  function getPriceWithDiscount(p: Product): number {
+    if (p.discount_active && p.discount_percent && p.discount_percent > 0) {
+      return Math.round(p.price * (1 - p.discount_percent / 100));
+    }
+    return p.price;
+  }
+
   const subtotal = state.items.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
+    (sum, item) => sum + getPriceWithDiscount(item.product) * item.quantity,
     0
   );
 

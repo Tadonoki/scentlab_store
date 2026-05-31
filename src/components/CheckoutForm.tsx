@@ -1,11 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { ArrowLeft, CreditCard } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
-import { formatPrice, PAYMENT_METHODS } from "@/lib/utils";
+import { Product, formatPrice, PAYMENT_METHODS } from "@/lib/utils";
 import { createOrder } from "@/lib/actions/orders";
+import { getActiveShippingRates } from "@/lib/actions/shipping";
 import Receipt from "./Receipt";
+
+function getDiscountedPrice(product: Product): number {
+  if (product.discount_active && product.discount_percent && product.discount_percent > 0) {
+    return Math.round(product.price * (1 - product.discount_percent / 100));
+  }
+  return product.price;
+}
 
 interface CheckoutFormProps {
   onBack: () => void;
@@ -15,6 +23,7 @@ interface CheckoutFormProps {
 interface FormData {
   buyer_name: string;
   buyer_phone: string;
+  buyer_province: string;
   buyer_address: string;
   payment_method: string;
   notes: string;
@@ -24,11 +33,19 @@ interface FormErrors {
   [key: string]: string;
 }
 
+interface ShippingRate {
+  id: string;
+  province: string;
+  shippingCost: number;
+}
+
 export default function CheckoutForm({ onBack, onClose }: CheckoutFormProps) {
   const { items, subtotal, clearCart } = useCart();
+  const [provinces, setProvinces] = useState<ShippingRate[]>([]);
   const [formData, setFormData] = useState<FormData>({
     buyer_name: "",
     buyer_phone: "",
+    buyer_province: "",
     buyer_address: "",
     payment_method: PAYMENT_METHODS[0],
     notes: "",
@@ -37,6 +54,24 @@ export default function CheckoutForm({ onBack, onClose }: CheckoutFormProps) {
   const [orderData, setOrderData] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const activeRates = await getActiveShippingRates();
+        setProvinces(activeRates as any);
+      } catch (err) {
+        console.error("Gagal memuat data provinsi:", err);
+      }
+    }
+    load();
+  }, []);
+
+  const selectedProvinceCost = useMemo(() => {
+    if (!formData.buyer_province) return 0;
+    const found = provinces.find((p) => p.province === formData.buyer_province);
+    return found ? found.shippingCost : 0;
+  }, [formData.buyer_province, provinces]);
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
@@ -49,6 +84,9 @@ export default function CheckoutForm({ onBack, onClose }: CheckoutFormProps) {
       !/^(\+?62|0)\d{8,12}$/.test(formData.buyer_phone.replace(/\s/g, ""))
     ) {
       newErrors.buyer_phone = "Nomor WhatsApp tidak valid (contoh: 08123456789)";
+    }
+    if (!formData.buyer_province) {
+      newErrors.buyer_province = "Silakan pilih provinsi pengiriman Anda";
     }
     if (!formData.buyer_address.trim() || formData.buyer_address.trim().length < 10) {
       newErrors.buyer_address = "Alamat minimal 10 karakter";
@@ -69,29 +107,35 @@ export default function CheckoutForm({ onBack, onClose }: CheckoutFormProps) {
     setSubmitError(null);
 
     try {
-      const shipping = subtotal >= 250000 ? 0 : 15000;
+      const shipping = selectedProvinceCost;
 
       const orderResult = await createOrder({
         buyerName: formData.buyer_name,
         buyerPhone: formData.buyer_phone.replace(/\s/g, ""),
+        buyerProvince: formData.buyer_province,
         buyerAddress: formData.buyer_address,
         paymentMethod: formData.payment_method,
         notes: formData.notes,
         subtotal: subtotal,
         shippingCost: shipping,
         totalAmount: subtotal + shipping,
-        items: items.map((item) => ({
-          productId: item.product.id,
-          productName: item.product.name,
-          scentNotes: item.product.scent_notes,
-          quantity: item.quantity,
-          price: item.product.price,
-          subtotal: item.product.price * item.quantity,
-        })),
+        items: items.map((item) => {
+          const discountPrice = getDiscountedPrice(item.product);
+          return {
+            productId: item.product.id,
+            productName: item.product.name,
+            scentNotes: item.product.scent_notes,
+            quantity: item.quantity,
+            price: discountPrice,
+            originalPrice: item.product.price,
+            subtotal: discountPrice * item.quantity,
+          };
+        }),
       });
 
       setOrderData(orderResult);
     } catch (err) {
+      console.error(err);
       setSubmitError("Terjadi kesalahan. Silakan coba lagi.");
     } finally {
       setIsSubmitting(false);
@@ -183,6 +227,31 @@ export default function CheckoutForm({ onBack, onClose }: CheckoutFormProps) {
           )}
         </div>
 
+        {/* Provinsi */}
+        <div>
+          <label className="block text-xs uppercase tracking-wider text-dark-brown/70 font-sans mb-1.5">
+            Provinsi Pengiriman
+          </label>
+          <select
+            name="buyer_province"
+            value={formData.buyer_province}
+            onChange={handleChange}
+            className={`w-full px-4 py-2.5 bg-white border ${
+              errors.buyer_province ? "border-red-400" : "border-warm-beige/60"
+            } text-dark-brown text-sm font-sans focus:outline-none focus:border-soft-gold transition-colors`}
+          >
+            <option value="">Pilih Provinsi...</option>
+            {provinces.map((p) => (
+              <option key={p.id} value={p.province}>
+                {p.province} ({formatPrice(p.shippingCost)})
+              </option>
+            ))}
+          </select>
+          {errors.buyer_province && (
+            <p className="text-xs text-red-500 mt-1 font-sans">{errors.buyer_province}</p>
+          )}
+        </div>
+
         {/* Alamat */}
         <div>
           <label className="block text-xs uppercase tracking-wider text-dark-brown/70 font-sans mb-1.5">
@@ -192,7 +261,7 @@ export default function CheckoutForm({ onBack, onClose }: CheckoutFormProps) {
             name="buyer_address"
             value={formData.buyer_address}
             onChange={handleChange}
-            placeholder="Jalan, kelurahan, kecamatan, kota, provinsi, kode pos"
+            placeholder="Jalan, kelurahan, kecamatan, kota, kode pos"
             rows={3}
             className={`w-full px-4 py-2.5 bg-white border ${
               errors.buyer_address ? "border-red-400" : "border-warm-beige/60"
@@ -258,20 +327,15 @@ export default function CheckoutForm({ onBack, onClose }: CheckoutFormProps) {
             <div className="flex justify-between text-dark-brown/70">
               <span>Shipping</span>
               <span>
-                {subtotal >= 250000
-                  ? "FREE"
-                  : formatPrice(15000)}
+                {formData.buyer_province
+                  ? formatPrice(selectedProvinceCost)
+                  : "Pilih provinsi untuk menghitung"}
               </span>
             </div>
-            {subtotal < 250000 && (
-              <p className="text-[11px] text-soft-gold">
-                Free shipping for orders over Rp250.000
-              </p>
-            )}
             <div className="flex justify-between text-dark-brown font-medium pt-2 border-t border-warm-beige/30">
               <span>Total</span>
               <span className="font-serif">
-                {formatPrice(subtotal + (subtotal >= 250000 ? 0 : 15000))}
+                {formatPrice(subtotal + selectedProvinceCost)}
               </span>
             </div>
           </div>

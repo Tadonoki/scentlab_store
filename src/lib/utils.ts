@@ -20,6 +20,8 @@ export interface Product {
   badge: string | null;
   is_featured: boolean;
   is_active: boolean;
+  discount_percent: number;
+  discount_active: boolean;
 }
 
 // Convert database snake_case to client camelCase-to-snake_case format
@@ -37,12 +39,22 @@ export function productToClient(p: typeof products.$inferSelect): Product {
     badge: p.badge,
     is_featured: p.isFeatured,
     is_active: p.isActive,
+    discount_percent: p.discountPercent,
+    discount_active: p.discountActive,
   };
 }
 
 // ─── Format helpers ───
 export function formatPrice(price: number): string {
   return `Rp${price.toLocaleString("id-ID")}`;
+}
+
+/** Calculate the effective (discounted) price. Returns original price if discount is inactive. */
+export function getEffectivePrice(product: Product): number {
+  if (product.discount_active && product.discount_percent > 0) {
+    return Math.round(product.price * (1 - product.discount_percent / 100));
+  }
+  return product.price;
 }
 
 export const PAYMENT_METHODS = [
@@ -55,6 +67,7 @@ export const PAYMENT_METHODS = [
 
 export const WHATSAPP_NUMBER = "6287868403642";
 export const INSTAGRAM_URL = "https://www.instagram.com/scentlab_store/";
+export const FACEBOOK_URL = "https://www.facebook.com/profile.php?id=61590578607384";
 export const SITE_NAME = "ScentLab_Store";
 export const SITE_TAGLINE = "Serenity in Every Scent";
 

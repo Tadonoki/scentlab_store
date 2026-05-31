@@ -48,7 +48,7 @@ export default function Navbar() {
             >
               <h1
                 className="font-script text-2xl text-dark-brown leading-none"
-                style={{ fontFamily: "'Great Vibes', cursive" }}
+                style={{ fontFamily: "'Alex Brush', cursive" }}
               >
                 {SITE_NAME}
               </h1>
@@ -101,7 +101,7 @@ export default function Navbar() {
             >
               <h1
                 className="font-script text-2xl lg:text-3xl text-dark-brown leading-none"
-                style={{ fontFamily: "'Great Vibes', cursive" }}
+                style={{ fontFamily: "'Alex Brush', cursive" }}
               >
                 {SITE_NAME}
               </h1>

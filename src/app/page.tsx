@@ -5,7 +5,7 @@ import { ChevronRight, Sparkles, Award, Truck, ShieldCheck, Star, MessageCircle,
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
-import { Product, formatPrice, WHATSAPP_NUMBER, getWhatsAppUrl, SITE_NAME } from "@/lib/utils";
+import { Product, formatPrice, WHATSAPP_NUMBER, getWhatsAppUrl, SITE_NAME, FACEBOOK_URL } from "@/lib/utils";
 import { getActiveProducts, getFeaturedProducts } from "@/lib/actions/products";
 
 export default function HomePage() {
@@ -67,7 +67,7 @@ export default function HomePage() {
 
             <h1
               className="font-script text-5xl sm:text-6xl md:text-7xl lg:text-8xl text-dark-brown leading-tight mb-6"
-              style={{ fontFamily: "'Great Vibes', cursive" }}
+              style={{ fontFamily: "'Alex Brush', cursive" }}
             >
               {SITE_NAME}
             </h1>
@@ -170,7 +170,7 @@ export default function HomePage() {
                       ) : (
                         <div
                           className="font-script text-3xl md:text-4xl text-soft-gold/40"
-                          style={{ fontFamily: "'Great Vibes', cursive" }}
+                          style={{ fontFamily: "'Alex Brush', cursive" }}
                         >
                           🕯️
                         </div>
@@ -179,9 +179,11 @@ export default function HomePage() {
                     <h3 className="font-serif text-sm md:text-base text-dark-brown group-hover:text-soft-gold transition-colors">
                       {product.name}
                     </h3>
-                    <p className="text-[10px] text-soft-taupe font-sans mt-0.5">
-                      {product.scent_notes.split("|")[0].trim()}
-                    </p>
+                    {product.badge && (
+                      <p className="text-[10px] uppercase tracking-wider mt-1.5 px-2 py-0.5 inline-block bg-warm-beige/40 border border-soft-gold/30 text-soft-gold font-sans leading-none">
+                        {product.badge}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -423,7 +425,7 @@ export default function HomePage() {
 
               {/* Facebook */}
               <a
-                href="#"
+                href={FACEBOOK_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group bg-white border border-warm-beige/40 p-6 md:p-8 text-center hover:border-soft-gold/60 hover:shadow-lg transition-all duration-300"

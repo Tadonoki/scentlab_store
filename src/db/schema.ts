@@ -83,6 +83,8 @@ export const products = pgTable("products", {
   description: text("description").notNull(),
   price: integer("price").notNull(),
   stock: integer("stock").notNull().default(0),
+  discountPercent: integer("discount_percent").notNull().default(0),
+  discountActive: boolean("discount_active").notNull().default(false),
   badge: varchar("badge", { length: 80 }),
   imageUrl: text("image_url"),
   isFeatured: boolean("is_featured").notNull().default(false),
@@ -96,6 +98,7 @@ export const orders = pgTable("orders", {
   orderCode: varchar("order_code", { length: 30 }).notNull().unique(),
   buyerName: varchar("buyer_name", { length: 160 }).notNull(),
   buyerPhone: varchar("buyer_phone", { length: 30 }).notNull(),
+  buyerProvince: varchar("buyer_province", { length: 160 }),
   buyerAddress: text("buyer_address").notNull(),
   paymentMethod: varchar("payment_method", { length: 60 }).notNull(),
   notes: text("notes"),
@@ -103,6 +106,15 @@ export const orders = pgTable("orders", {
   shippingCost: integer("shipping_cost").notNull().default(0),
   totalAmount: integer("total_amount").notNull(),
   status: varchar("status", { length: 40 }).notNull().default("PENDING_PAYMENT"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const shippingRates = pgTable("shipping_rates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  province: varchar("province", { length: 160 }).notNull().unique(),
+  shippingCost: integer("shipping_cost").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

@@ -1,13 +1,14 @@
 "use server";
 
 import { db } from "@/db";
-import { orders, orderItems, products } from "@/db/schema";
+import { orders, orderItems, products, shippingRates } from "@/db/schema";
 import { eq, desc, asc, sql } from "drizzle-orm";
 
 // ─── Create Order ───
 export async function createOrder(data: {
   buyerName: string;
   buyerPhone: string;
+  buyerProvince?: string;
   buyerAddress: string;
   paymentMethod: string;
   notes: string;
@@ -20,6 +21,7 @@ export async function createOrder(data: {
     scentNotes: string;
     quantity: number;
     price: number;
+    originalPrice?: number;
     subtotal: number;
   }[];
 }) {
@@ -29,6 +31,27 @@ export async function createOrder(data: {
   const randomPart = Math.floor(Math.random() * 9000) + 1000;
   const orderCode = `SL-${dateStr}-${randomPart}`;
 
+  // Server-side validation of shipping cost
+  let validatedShippingCost = 0;
+  if (data.buyerProvince) {
+    const [rateRecord] = await db
+      .select()
+      .from(shippingRates)
+      .where(eq(shippingRates.province, data.buyerProvince))
+      .limit(1);
+    
+    if (rateRecord && rateRecord.isActive) {
+      validatedShippingCost = rateRecord.shippingCost;
+    } else {
+      // Fallback or error if inactive
+      validatedShippingCost = data.shippingCost;
+    }
+  } else {
+    validatedShippingCost = data.shippingCost;
+  }
+
+  const validatedTotal = data.subtotal + validatedShippingCost;
+
   // Insert order
   const [order] = await db
     .insert(orders)
@@ -36,12 +59,13 @@ export async function createOrder(data: {
       orderCode,
       buyerName: data.buyerName,
       buyerPhone: data.buyerPhone,
+      buyerProvince: data.buyerProvince || null,
       buyerAddress: data.buyerAddress,
       paymentMethod: data.paymentMethod,
       notes: data.notes || null,
       subtotal: data.subtotal,
-      shippingCost: data.shippingCost,
-      totalAmount: data.totalAmount,
+      shippingCost: validatedShippingCost,
+      totalAmount: validatedTotal,
       status: "PENDING_PAYMENT",
     })
     .returning();
@@ -71,6 +95,7 @@ export async function createOrder(data: {
     order_code: order.orderCode,
     buyer_name: order.buyerName,
     buyer_phone: order.buyerPhone,
+    buyer_province: order.buyerProvince || "",
     buyer_address: order.buyerAddress,
     payment_method: order.paymentMethod,
     notes: order.notes || "",
@@ -83,6 +108,7 @@ export async function createOrder(data: {
       scent_notes: item.scentNotes,
       quantity: item.quantity,
       price: item.price,
+      original_price: item.originalPrice,
       subtotal: item.subtotal,
     })),
     created_at: order.createdAt?.toISOString() || new Date().toISOString(),
@@ -109,6 +135,7 @@ export async function getOrderByCode(orderCode: string) {
     order_code: order.orderCode,
     buyer_name: order.buyerName,
     buyer_phone: order.buyerPhone,
+    buyer_province: order.buyerProvince || "",
     buyer_address: order.buyerAddress,
     payment_method: order.paymentMethod,
     notes: order.notes || "",
@@ -123,6 +150,7 @@ export async function getOrderByCode(orderCode: string) {
       scent_notes: item.scentNotes || "",
       quantity: item.quantity,
       price: item.price,
+      original_price: item.price,
       subtotal: item.subtotal,
     })),
   };
@@ -139,6 +167,7 @@ export async function getAllOrders() {
     order_code: o.orderCode,
     buyer_name: o.buyerName,
     buyer_phone: o.buyerPhone,
+    buyer_province: o.buyerProvince || "",
     buyer_address: o.buyerAddress,
     payment_method: o.paymentMethod,
     notes: o.notes || "",
@@ -173,6 +202,7 @@ export async function getOrderDetail(orderId: string) {
     order_code: order.orderCode,
     buyer_name: order.buyerName,
     buyer_phone: order.buyerPhone,
+    buyer_province: order.buyerProvince || "",
     buyer_address: order.buyerAddress,
     payment_method: order.paymentMethod,
     notes: order.notes || "",
@@ -189,6 +219,7 @@ export async function getOrderDetail(orderId: string) {
       scent_notes: item.scentNotes || "",
       quantity: item.quantity,
       price: item.price,
+      original_price: item.price,
       subtotal: item.subtotal,
     })),
   };
