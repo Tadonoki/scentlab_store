@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { ShoppingBag, Sparkles } from "lucide-react";
+import { ShoppingBag, Sparkles, Scale } from "lucide-react";
 import { Product, formatPrice } from "@/lib/utils";
 import { useCart } from "@/lib/cart-context";
 
@@ -125,6 +125,13 @@ export default function ProductCard({ product }: ProductCardProps) {
             {product.scent_notes}
           </p>
         </div>
+
+        {product.weight_grams && product.weight_grams > 0 ? (
+          <div className="flex items-center gap-1 mb-2 text-[10px] md:text-[11px] text-soft-taupe font-sans">
+            <Scale size={11} className="text-soft-taupe/60" />
+            <span>{product.weight_grams}g</span>
+          </div>
+        ) : null}
 
         <p className="text-xs md:text-sm text-dark-brown/60 font-sans leading-relaxed line-clamp-2">
           {product.description}

@@ -6,6 +6,7 @@ import {
   boolean,
   uuid,
   varchar,
+  doublePrecision,
 } from "drizzle-orm/pg-core";
 
 // ──────────────────────────────────────────
@@ -89,6 +90,7 @@ export const products = pgTable("products", {
   imageUrl: text("image_url"),
   isFeatured: boolean("is_featured").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),
+  weightGrams: integer("weight_grams").default(0).notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -105,6 +107,8 @@ export const orders = pgTable("orders", {
   subtotal: integer("subtotal").notNull(),
   shippingCost: integer("shipping_cost").notNull().default(0),
   totalAmount: integer("total_amount").notNull(),
+  totalWeightGrams: integer("total_weight_grams").default(0).notNull(),
+  shippingMultiplier: doublePrecision("shipping_multiplier").default(1.0).notNull(),
   status: varchar("status", { length: 40 }).notNull().default("PENDING_PAYMENT"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

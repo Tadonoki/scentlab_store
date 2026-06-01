@@ -22,6 +22,7 @@ export interface Product {
   is_active: boolean;
   discount_percent: number;
   discount_active: boolean;
+  weight_grams: number;
 }
 
 // Convert database snake_case to client camelCase-to-snake_case format
@@ -41,6 +42,7 @@ export function productToClient(p: typeof products.$inferSelect): Product {
     is_active: p.isActive,
     discount_percent: p.discountPercent,
     discount_active: p.discountActive,
+    weight_grams: p.weightGrams,
   };
 }
 
@@ -58,11 +60,10 @@ export function getEffectivePrice(product: Product): number {
 }
 
 export const PAYMENT_METHODS = [
-  "Transfer Bank (BCA)",
-  "Transfer Bank (Mandiri)",
+  "Transfer Via Bank",
   "DANA",
   "OVO",
-  "COD (Bayar di Tempat)",
+  "QRIS",
 ];
 
 export const WHATSAPP_NUMBER = "6287868403642";

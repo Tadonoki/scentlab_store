@@ -280,6 +280,9 @@ export default function AdminProductsPage() {
                   Stock
                 </th>
                 <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-dark-brown/60 font-sans">
+                  Berat
+                </th>
+                <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-dark-brown/60 font-sans">
                   Badge
                 </th>
                 <th className="text-left px-4 py-3 text-xs uppercase tracking-wider text-dark-brown/60 font-sans">
@@ -327,6 +330,7 @@ export default function AdminProductsPage() {
                     )}
                   </td>
                   <td className="px-4 py-4 text-sm font-sans text-dark-brown">{product.stock}</td>
+                  <td className="px-4 py-4 text-sm font-sans text-dark-brown">{product.weight_grams ?? 0} g</td>
                   <td className="px-4 py-4">
                     {product.badge && (
                       <span className="text-[10px] px-2 py-0.5 bg-soft-gold/10 text-soft-gold border border-soft-gold/30 font-sans uppercase tracking-wider">

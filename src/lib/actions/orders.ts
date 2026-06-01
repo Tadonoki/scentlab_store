@@ -15,6 +15,8 @@ export async function createOrder(data: {
   subtotal: number;
   shippingCost: number;
   totalAmount: number;
+  totalWeightGrams?: number;
+  shippingMultiplier?: number;
   items: {
     productId: string;
     productName: string;
@@ -31,8 +33,26 @@ export async function createOrder(data: {
   const randomPart = Math.floor(Math.random() * 9000) + 1000;
   const orderCode = `SL-${dateStr}-${randomPart}`;
 
+  // Server-side validation of product weights
+  let calculatedTotalWeight = 0;
+  for (const item of data.items) {
+    const [prod] = await db
+      .select({ weightGrams: products.weightGrams })
+      .from(products)
+      .where(eq(products.id, item.productId))
+      .limit(1);
+    if (prod) {
+      calculatedTotalWeight += (prod.weightGrams ?? 0) * item.quantity;
+    }
+  }
+
+  // Hard limit: total weight cannot exceed 2000g
+  if (calculatedTotalWeight > 2000) {
+    throw new Error("Total berat melebihi batas maksimal 2kg. Silakan kurangi jumlah produk.");
+  }
+
   // Server-side validation of shipping cost
-  let validatedShippingCost = 0;
+  let baseShippingCost = 0;
   if (data.buyerProvince) {
     const [rateRecord] = await db
       .select()
@@ -41,15 +61,24 @@ export async function createOrder(data: {
       .limit(1);
     
     if (rateRecord && rateRecord.isActive) {
-      validatedShippingCost = rateRecord.shippingCost;
+      baseShippingCost = rateRecord.shippingCost;
     } else {
-      // Fallback or error if inactive
-      validatedShippingCost = data.shippingCost;
+      baseShippingCost = 0;
     }
-  } else {
-    validatedShippingCost = data.shippingCost;
   }
 
+  let multiplier = 1;
+  if (calculatedTotalWeight <= 1000) {
+    multiplier = 1;
+  } else if (calculatedTotalWeight <= 1500) {
+    multiplier = 1.5;
+  } else if (calculatedTotalWeight <= 2000) {
+    multiplier = 2;
+  } else {
+    multiplier = 2;
+  }
+
+  const validatedShippingCost = Math.round(baseShippingCost * multiplier);
   const validatedTotal = data.subtotal + validatedShippingCost;
 
   // Insert order
@@ -66,6 +95,8 @@ export async function createOrder(data: {
       subtotal: data.subtotal,
       shippingCost: validatedShippingCost,
       totalAmount: validatedTotal,
+      totalWeightGrams: calculatedTotalWeight,
+      shippingMultiplier: multiplier,
       status: "PENDING_PAYMENT",
     })
     .returning();
@@ -102,6 +133,8 @@ export async function createOrder(data: {
     subtotal_amount: order.subtotal,
     shipping_amount: order.shippingCost,
     total_amount: order.totalAmount,
+    total_weight_grams: order.totalWeightGrams,
+    shipping_multiplier: order.shippingMultiplier,
     status: order.status,
     items: data.items.map((item) => ({
       product_name: item.productName,
@@ -142,6 +175,8 @@ export async function getOrderByCode(orderCode: string) {
     subtotal_amount: order.subtotal,
     shipping_amount: order.shippingCost,
     total_amount: order.totalAmount,
+    total_weight_grams: order.totalWeightGrams,
+    shipping_multiplier: order.shippingMultiplier,
     status: order.status,
     created_at: order.createdAt?.toISOString() || "",
     updated_at: order.updatedAt?.toISOString() || "",
@@ -174,6 +209,8 @@ export async function getAllOrders() {
     subtotal_amount: o.subtotal,
     shipping_amount: o.shippingCost,
     total_amount: o.totalAmount,
+    total_weight_grams: o.totalWeightGrams,
+    shipping_multiplier: o.shippingMultiplier,
     status: o.status,
     created_at: o.createdAt?.toISOString() || "",
     updated_at: o.updatedAt?.toISOString() || "",
@@ -209,6 +246,8 @@ export async function getOrderDetail(orderId: string) {
     subtotal_amount: order.subtotal,
     shipping_amount: order.shippingCost,
     total_amount: order.totalAmount,
+    total_weight_grams: order.totalWeightGrams,
+    shipping_multiplier: order.shippingMultiplier,
     status: order.status,
     created_at: order.createdAt?.toISOString() || "",
     updated_at: order.updatedAt?.toISOString() || "",

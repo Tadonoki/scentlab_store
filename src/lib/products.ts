@@ -40,11 +40,10 @@ export interface OrderData {
 }
 
 export const paymentMethods = [
-  "Transfer Bank (BCA)",
-  "Transfer Bank (Mandiri)",
+  "Transfer Via Bank",
   "DANA",
   "OVO",
-  "COD (Bayar di Tempat)",
+  "QRIS",
 ];
 
 export const WHATSAPP_NUMBER = "6287868403642";

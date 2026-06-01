@@ -67,11 +67,34 @@ export default function CheckoutForm({ onBack, onClose }: CheckoutFormProps) {
     load();
   }, []);
 
-  const selectedProvinceCost = useMemo(() => {
-    if (!formData.buyer_province) return 0;
+  const totalWeight = useMemo(() => {
+    return items.reduce((sum, item) => sum + (item.product.weight_grams ?? 0) * item.quantity, 0);
+  }, [items]);
+
+  const shippingDetails = useMemo(() => {
+    if (!formData.buyer_province) return { cost: 0, multiplier: 1, base: 0 };
     const found = provinces.find((p) => p.province === formData.buyer_province);
-    return found ? found.shippingCost : 0;
-  }, [formData.buyer_province, provinces]);
+    if (!found) return { cost: 0, multiplier: 1, base: 0 };
+    const base = found.shippingCost;
+
+    let multiplier = 1;
+    if (totalWeight <= 1000) {
+      multiplier = 1;
+    } else if (totalWeight <= 1500) {
+      multiplier = 1.5;
+    } else if (totalWeight <= 2000) {
+      multiplier = 2;
+    } else {
+      multiplier = 2;
+    }
+    return {
+      cost: Math.round(base * multiplier),
+      multiplier,
+      base
+    };
+  }, [formData.buyer_province, provinces, totalWeight]);
+
+  const selectedProvinceCost = shippingDetails.cost;
 
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
@@ -93,6 +116,9 @@ export default function CheckoutForm({ onBack, onClose }: CheckoutFormProps) {
     }
     if (!formData.payment_method) {
       newErrors.payment_method = "Pilih metode pembayaran";
+    }
+    if (totalWeight > 2000) {
+      newErrors.weight = "Total berat melebihi batas maksimal 2kg. Silakan kurangi jumlah produk.";
     }
 
     setErrors(newErrors);
@@ -119,6 +145,8 @@ export default function CheckoutForm({ onBack, onClose }: CheckoutFormProps) {
         subtotal: subtotal,
         shippingCost: shipping,
         totalAmount: subtotal + shipping,
+        totalWeightGrams: totalWeight,
+        shippingMultiplier: shippingDetails.multiplier,
         items: items.map((item) => {
           const discountPrice = getDiscountedPrice(item.product);
           return {
@@ -180,6 +208,12 @@ export default function CheckoutForm({ onBack, onClose }: CheckoutFormProps) {
 
       <form onSubmit={handleSubmit} className="px-6 py-4 space-y-5">
         <h3 className="font-serif text-base text-dark-brown">Shipping Details</h3>
+
+        {totalWeight > 2000 && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-sans">
+            Total berat melebihi batas maksimal 2kg. Silakan kurangi jumlah produk.
+          </div>
+        )}
 
         {submitError && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-sans">
@@ -325,7 +359,11 @@ export default function CheckoutForm({ onBack, onClose }: CheckoutFormProps) {
               <span>{formatPrice(subtotal)}</span>
             </div>
             <div className="flex justify-between text-dark-brown/70">
-              <span>Shipping</span>
+              <span>Total Berat</span>
+              <span>{totalWeight.toLocaleString("id-ID")} g</span>
+            </div>
+            <div className="flex justify-between text-dark-brown/70">
+              <span>Shipping {shippingDetails.multiplier > 1 ? `(${shippingDetails.multiplier}x)` : ""}</span>
               <span>
                 {formData.buyer_province
                   ? formatPrice(selectedProvinceCost)
@@ -344,7 +382,7 @@ export default function CheckoutForm({ onBack, onClose }: CheckoutFormProps) {
         {/* Submit */}
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || totalWeight > 2000}
           className="w-full py-3 bg-dark-brown text-nude-cream text-sm tracking-wider uppercase font-sans hover:bg-dark-brown/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? "Processing..." : "Place Order"}

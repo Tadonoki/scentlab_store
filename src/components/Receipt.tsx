@@ -31,6 +31,9 @@ export default function Receipt({
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
+  const multiplier = orderData.shipping_multiplier ?? 1;
+  const baseShippingCost = multiplier > 1 ? Math.round(orderData.shipping_amount / multiplier) : orderData.shipping_amount;
+
   useEffect(() => {
     clearCart();
   }, []);
@@ -216,12 +219,18 @@ Saya akan mengirim bukti pembayaran.`;
               <span>Rp${orderData.subtotal_amount.toLocaleString("id-ID")}</span>
             </div>
             <div class="total-row">
+              <span>Total Berat</span>
+              <span>${orderData.total_weight_grams ? orderData.total_weight_grams.toLocaleString("id-ID") : 0} g</span>
+            </div>
+            <div class="total-row">
               <span>Shipping</span>
-              <span>${
-                orderData.shipping_amount === 0
-                  ? "FREE"
-                  : "Rp" + orderData.shipping_amount.toLocaleString("id-ID")
-              }</span>
+              <span style="text-align:right;">
+                ${
+                  multiplier > 1
+                    ? `<span style="font-size:10px;color:#8a7a6a;display:block;">Rp${baseShippingCost.toLocaleString("id-ID")} x ${multiplier}</span> Rp${orderData.shipping_amount.toLocaleString("id-ID")}`
+                    : (orderData.shipping_amount === 0 ? "FREE" : "Rp" + orderData.shipping_amount.toLocaleString("id-ID"))
+                }
+              </span>
             </div>
             <hr class="divider" style="margin:6px 0;"/>
             <div class="total-row">
@@ -426,11 +435,22 @@ Saya akan mengirim bukti pembayaran.`;
                 <span>{formatPrice(orderData.subtotal_amount)}</span>
               </div>
               <div className="flex justify-between text-dark-brown/70">
+                <span>Total Berat</span>
+                <span>{orderData.total_weight_grams ? orderData.total_weight_grams.toLocaleString("id-ID") : 0} g</span>
+              </div>
+              <div className="flex justify-between text-dark-brown/70">
                 <span>Shipping</span>
-                <span>
-                  {orderData.shipping_amount === 0
-                    ? "FREE"
-                    : formatPrice(orderData.shipping_amount)}
+                <span className="text-right">
+                  {multiplier > 1 ? (
+                    <>
+                      <span className="text-[10px] text-dark-brown/50 block">
+                        Rp{baseShippingCost.toLocaleString("id-ID")} x {multiplier}
+                      </span>
+                      <span>{formatPrice(orderData.shipping_amount)}</span>
+                    </>
+                  ) : (
+                    orderData.shipping_amount === 0 ? "FREE" : formatPrice(orderData.shipping_amount)
+                  )}
                 </span>
               </div>
               <hr className="border-t border-warm-beige/50 my-1" />

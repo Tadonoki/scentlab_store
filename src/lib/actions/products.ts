@@ -67,6 +67,7 @@ export async function createProduct(data: {
   isActive?: boolean;
   discountPercent?: number;
   discountActive?: boolean;
+  weightGrams?: number;
 }) {
   await db.insert(products).values({
     name: data.name,
@@ -82,6 +83,7 @@ export async function createProduct(data: {
     isActive: data.isActive ?? true,
     discountPercent: data.discountPercent ?? 0,
     discountActive: data.discountActive ?? false,
+    weightGrams: data.weightGrams ?? 0,
   });
 }
 
@@ -102,6 +104,7 @@ export async function updateProduct(
     isActive?: boolean;
     discountPercent?: number;
     discountActive?: boolean;
+    weightGrams?: number;
   }
 ) {
   await db.update(products).set(data).where(eq(products.id, id));

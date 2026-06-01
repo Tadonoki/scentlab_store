@@ -47,6 +47,8 @@ interface Order {
   status: string;
   created_at: string;
   updated_at: string;
+  total_weight_grams?: number;
+  shipping_multiplier?: number;
   items: OrderItem[];
 }
 
@@ -236,7 +238,17 @@ export default function AdminOrderDetailPage() {
                 <Truck size={16} className="text-soft-taupe flex-shrink-0" />
                 <div>
                   <p className="text-xs text-dark-brown/40 font-sans">Shipping Cost</p>
-                  <p className="text-sm font-sans text-dark-brown">{formatPrice(order.shipping_amount)}</p>
+                  <p className="text-sm font-sans text-dark-brown">
+                    {formatPrice(order.shipping_amount)}
+                    {order.shipping_multiplier && order.shipping_multiplier > 1 ? ` (${order.shipping_multiplier}x)` : ""}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Package size={16} className="text-soft-taupe flex-shrink-0" />
+                <div>
+                  <p className="text-xs text-dark-brown/40 font-sans">Total Weight</p>
+                  <p className="text-sm font-sans text-dark-brown">{order.total_weight_grams ?? 0} g</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -313,7 +325,10 @@ export default function AdminOrderDetailPage() {
               </div>
               <div className="flex items-center justify-between text-sm font-sans text-dark-brown/60">
                 <span>Shipping</span>
-                <span>{formatPrice(order.shipping_amount)}</span>
+                <span>
+                  {formatPrice(order.shipping_amount)}
+                  {order.shipping_multiplier && order.shipping_multiplier > 1 ? ` (${order.shipping_multiplier}x)` : ""}
+                </span>
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-warm-beige/20">
                 <p className="font-serif text-base text-dark-brown">Total</p>
@@ -458,6 +473,12 @@ export default function AdminOrderDetailPage() {
                 </span>
               </div>
               <div className="flex justify-between">
+                <span className="text-dark-brown/50">Total Weight</span>
+                <span className="text-dark-brown">
+                  {order.total_weight_grams ?? 0} g
+                </span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-dark-brown/50">Total</span>
                 <span className="text-dark-brown font-medium">
                   {formatPrice(order.total_amount)}
@@ -513,6 +534,11 @@ export default function AdminOrderDetailPage() {
                 <p className="text-xs font-sans text-dark-brown">{order.buyer_province}</p>
               </div>
             )}
+
+            <div className="mt-1">
+              <p className="text-[10px] uppercase font-semibold text-dark-brown/50">Total Berat</p>
+              <p className="text-xs font-sans text-dark-brown">{order.total_weight_grams ?? 0} g</p>
+            </div>
 
             <div className="mt-1">
               <p className="text-[10px] uppercase font-semibold text-dark-brown/50">Alamat</p>

@@ -23,6 +23,7 @@ export default function AdminNewProductPage() {
     imageUrl: "",
     discount_percent: "0",
     discount_active: false,
+    weightGrams: "0",
   });
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -35,6 +36,9 @@ export default function AdminNewProductPage() {
     if (!formData.description.trim()) newErrors.description = "Deskripsi harus diisi";
     if (!formData.price || Number(formData.price) <= 0) newErrors.price = "Harga harus valid";
     if (!formData.stock || Number(formData.stock) < 0) newErrors.stock = "Stok harus valid";
+    if (!formData.weightGrams || isNaN(Number(formData.weightGrams)) || Number(formData.weightGrams) < 1) {
+      newErrors.weightGrams = "Berat produk wajib diisi angka minimal 1 gram";
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -59,6 +63,7 @@ export default function AdminNewProductPage() {
         isActive: formData.is_active,
         discountPercent: Number(formData.discount_percent) || 0,
         discountActive: formData.discount_active,
+        weightGrams: Number(formData.weightGrams),
       });
       router.push("/admin/products");
     } catch (err) {
@@ -218,7 +223,7 @@ export default function AdminNewProductPage() {
             )}
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-5">
+          <div className="grid sm:grid-cols-4 gap-5">
             <div>
               <label className="block text-xs uppercase tracking-wider text-dark-brown/60 font-sans mb-1.5">
                 Harga (Rp) <span className="text-red-400">*</span>
@@ -254,6 +259,25 @@ export default function AdminNewProductPage() {
               />
               {errors.stock && (
                 <p className="text-xs text-red-500 mt-1">{errors.stock}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-wider text-dark-brown/60 font-sans mb-1.5">
+                Berat (gram) <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="number"
+                name="weightGrams"
+                value={formData.weightGrams}
+                onChange={handleChange}
+                placeholder="500"
+                className={`w-full px-4 py-2.5 bg-nude-cream border text-dark-brown text-sm font-sans focus:outline-none focus:border-soft-gold transition-colors ${
+                  errors.weightGrams ? "border-red-300" : "border-warm-beige/60"
+                }`}
+              />
+              {errors.weightGrams && (
+                <p className="text-xs text-red-500 mt-1">{errors.weightGrams}</p>
               )}
             </div>
 

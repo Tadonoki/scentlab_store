@@ -22,6 +22,10 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { items, removeItem, updateQuantity, subtotal, totalItems, clearCart } = useCart();
   const [showCheckout, setShowCheckout] = useState(false);
 
+  const totalWeight = useMemo(() => {
+    return items.reduce((sum, item) => sum + (item.product.weight_grams ?? 0) * item.quantity, 0);
+  }, [items]);
+
   // Prevent body scroll when drawer is open
   useEffect(() => {
     if (isOpen) {
@@ -128,11 +132,18 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                           <h3 className="font-serif text-sm text-dark-brown font-medium truncate">
                             {item.product.name}
                           </h3>
-                          {item.product.badge && (
-                            <span className="inline-block text-[10px] uppercase tracking-wider text-soft-gold font-sans mt-0.5">
-                              {item.product.badge}
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {item.product.badge && (
+                              <span className="inline-block text-[10px] uppercase tracking-wider text-soft-gold font-sans">
+                                {item.product.badge}
+                              </span>
+                            )}
+                            {item.product.weight_grams > 0 && (
+                              <span className="inline-block text-[10px] text-soft-taupe font-sans">
+                                {item.product.weight_grams}g
+                              </span>
+                            )}
+                          </div>
                           <p className="text-sm text-dark-brown/70 font-sans mt-1">
                             {item.product.discount_active && item.product.discount_percent > 0 ? (
                               <>
@@ -201,6 +212,14 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               {/* Footer */}
               {items.length > 0 && (
                 <div className="px-6 py-5 border-t border-warm-beige/40 bg-warm-beige/20">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs font-sans uppercase tracking-wider text-dark-brown/70">
+                      Total Berat
+                    </span>
+                    <span className="text-sm font-sans text-dark-brown font-medium">
+                      {totalWeight.toLocaleString("id-ID")} g
+                    </span>
+                  </div>
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-sm font-sans uppercase tracking-wider text-dark-brown/70">
                       Subtotal
